@@ -1,13 +1,12 @@
 /* app.js */
 
-const otel = require('@opentelemetry/core')
-const otelapi = require('@opentelemetry/api')
-const fetch = require('node-fetch')
-const interceptor = require('./requestInterceptor')
+// const nf = require('node-fetch')
+// const interceptor = require('./requestInterceptor.ts')
+import interceptor from './requestInterceptor';
+import nf from 'node-fetch';
 
 const path = require('path');
 const express = require("express");
-const { request } = require('http');
 const PORT = process.env.PORT || "3001";
 const app = express();
 
@@ -25,7 +24,7 @@ app.post("/moveon", async (req, res)=> {
     if(process.env.NODE_ENV === 'production') url = 'http://d2:3002/moveon';
 
     try {
-      const response = await fetch(url) // Comment for container build
+      const response = await nf.fetch(url) // Comment for container build
       const data = await response.json();
 
       console.log("\nRECEIVED RESPONSE:")

@@ -1,6 +1,6 @@
 
 const otel = require('@opentelemetry/core')
-const interceptor = require('./requestInterceptor');
+const interceptor = require('./requestInterceptor.ts');
 const fetch = require('node-fetch');
 
 const express = require("express");
