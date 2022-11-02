@@ -9,21 +9,30 @@ const mswjs = require('@mswjs/interceptors')
 const { ClientRequestInterceptor } = require('@mswjs/interceptors/lib/interceptors/ClientRequest');
 const { FetchInterceptor } = require('@mswjs/interceptors/lib/interceptors/fetch');
 const express = require("express");
-const fetch = require('node-fetch');
 
+const { RemoteHttpInterceptor } = require('@mswjs/interceptors/lib/RemoteHttpInterceptor');
+// const { spawn } = require('child_process');
+const { RemoteHttpResolver } = require('@mswjs/interceptors/lib/RemoteHttpInterceptor');
+
+
+// const appProcess = spawn('node', ['server.js'], {
+//   stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+// })
+
+// const resolver = new RemoteHttpResolver({
+//   process: appProcess,
+// })
 
 async function _instrumentHTTPTraffic() {
-  const interceptor = new ClientRequestInterceptor();
-  // const fetchInterceptor = new FetchInterceptor();
+
+  const interceptor = new RemoteHttpInterceptor({
+    interceptors: [new FetchInterceptor()],
+  })
 
   interceptor.apply();
-  // fetchInterceptor.apply();
 
-  // fetchInterceptor.on('request', async (request) => {
-  //   console.log('caught fetch');
-  // })
-
-  interceptor.on('request', async (request) => {
+  resolver.on('request', async (request) => {
+    console.log("intercepted");
 
     const defaultHeaders = request.headers.all()
     const defaultUrl = request.url;

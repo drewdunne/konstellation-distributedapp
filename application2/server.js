@@ -1,7 +1,6 @@
 
 const otel = require('@opentelemetry/core')
 const interceptor = require('./requestInterceptor');
-const fetch = require('node-fetch');
 
 const express = require("express");
 const PORT = process.env.PORT || "3002";
