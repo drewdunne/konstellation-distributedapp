@@ -1,15 +1,20 @@
+import { ClientRequestInterceptor } from '@mswjs/interceptors/lib/interceptors/ClientRequest'
+import nf from 'node-fetch'
+
 const mswjs = require('@mswjs/interceptors')
-const { ClientRequestInterceptor } = require('@mswjs/interceptors/lib/interceptors/ClientRequest');
+// const { ClientRequestInterceptor } = require('@mswjs/interceptors/lib/interceptors/ClientRequest');
 const { FetchInterceptor } = require('@mswjs/interceptors/lib/interceptors/fetch');
 const { response } = require('express');
 const express = require("express");
-const nf = require('node-fetch');
+// const nf = require('node-fetch');
 
 const cache = {
   
 }
 
-async function _instrumentHTTPTraffic() {
+
+
+export default async function _instrumentHTTPTraffic() {
   const interceptor = new ClientRequestInterceptor();
 
   interceptor.apply();
@@ -46,5 +51,3 @@ async function _instrumentHTTPTraffic() {
 // module.exports = {
 //   instrumentTraffic: _instrumentHTTPTraffic
 // }
-
-export default _instrumentHTTPTraffic;

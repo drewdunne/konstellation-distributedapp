@@ -2,11 +2,14 @@
 
 // const nf = require('node-fetch')
 // const interceptor = require('./requestInterceptor.ts')
+// const path = require('path');
+// const express = require("express");
+
 import interceptor from './requestInterceptor';
 import nf from 'node-fetch';
+import path from 'path'
+import express from 'express'
 
-const path = require('path');
-const express = require("express");
 const PORT = process.env.PORT || "3001";
 const app = express();
 
