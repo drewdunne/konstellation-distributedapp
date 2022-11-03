@@ -1,79 +1,88 @@
-const mswjs = require('@mswjs/interceptors')
 const { ClientRequestInterceptor } = require('@mswjs/interceptors/lib/interceptors/ClientRequest');
-const express = require("express");
-const fetch = require('node-fetch')
+const fetch = require('node-fetch');
+const { v4: uuidv4 } = require('uuid');
 const otel = require('@opentelemetry/core')
-const otelapi = require('@opentelemetry/api')
+const api = require('@opentelemetry/api')
+const { AsyncHooksContextManager } = require("@opentelemetry/context-async-hooks");
 
+const cache = {
 
-function _instrumentHTTPTraffic() {
+}
+
+async function _instrumentHTTPTraffic() {
   const interceptor = new ClientRequestInterceptor();
 
   interceptor.apply();
 
   interceptor.on('request', async (request) => {
-    
-    console.log('\n');
-    console.log("~~ REQUEST INTERCEPTED ~~" + '\n')
+    const defaultHeaders = request.headers.all()
+    const defaultUrl = request.url;
 
-    const propogator = new otel.W3CTraceContextPropagator();
-    const context = otelapi.ROOT_CONTEXT;
+    // console.log("\nDEFAULT HEADERS:")
+    // console.log(defaultHeaders)
 
-    console.log("CURRENT PROPOGATOR")
-    console.log(propogator);
-    console.log('\n');
-    
-    console.log("CURRENT CONTEXT")
-    console.log(context);
-    console.log('\n');
-    
-    console.log("CURRENT CONTEXT VALUE")
-    console.log(context.getValue());
-    console.log('\n');
+    if(!request.headers.all()['mock-id']) {
+      const propogator = new otel.W3CTraceContextPropagator()
+      const contextManager = new AsyncHooksContextManager();
+      contextManager.enable();
+      api.context.setGlobalContextManager(contextManager);
 
-    // console.log("OTHER LOGS")
-    // console.log("TraceID:")
-    // console.log(context.TraceID);
-    console.log("Trace:")
-    console.log(otelapi.trace);
-    // console.log("GetTracer:")
-    // console.log(otelapi.trace.getTracer());
-    // console.log("GetSpan:")
-    // console.log(otelapi.trace.getSpan())
-    // console.log("GetSpanContext:")
-    // console.log(otelapi.trace.getSpanContext())
-    // console.log("Trace Flags:")
-    console.log(otelapi.TraceFlags);
-    console.log('\n');
-    
-    const updatedHeaders = {
-      ...request.headers.all(),
-      TraceID: 'd1bvhjkfhdsjkhkj4bvc42142-421u48291'
-    }
+      const key = api.createContextKey("some key");
+      const ctx = api.ROOT_CONTEXT;
+      const ctx2 = ctx.setValue(key, "context 2");
 
-    propogator.inject(context, updatedHeaders);
+      console.log("\nPROPOGATOR DEFINITION:")
+      console.log(propogator)
 
-    if(!request.headers.all()['trace-id']) {
-        const url = request.url;
-        const response = await fetch(url, {
-          headers: updatedHeaders
+      
+      // const context = otelapi.trace.getSpanContext();
+      console.log("\nCONTEXT VALUES:")
+      console.log(ctx)
+      console.log(ctx2);
+      
+      let mockHeaders = defaultHeaders
+      // propogator.inject(context, mockHeaders);
+      
+      const requestMockId = uuidv4();
+      cache[requestMockId] = true;
+      
+      mockHeaders = {
+        ...mockHeaders,
+        'mock-id': requestMockId
+      }
+      
+      propogator.inject(ctx, mockHeaders)
+
+      let mockResponse = await fetch(defaultUrl, {
+        headers: mockHeaders
       })
-      // request.respondWith({
-      //   status: request.headers.all(),
-      //   statusText: response.statusText,
-      //   headers: {
-      //     ...response.headers,
-      //     'trace-id': 'd1bvhjkfhdsjkhkj4bvc42142-421u48291'
-      //   },
-      //   body: response.body,
-      // })
-    }
+      
+      // console.log("\nMOCK RESPONSE HEADERS")
+      // console.log(mockResponse.headers)
+      
+      // console.log("\nHEADERS OBJ VALUES")
+      // console.log(headersObj);
 
+      const mockResponseData = await mockResponse.json();
+      const responseMockId = uuidv4();
+      cache[responseMockId] = true;
 
-  }
-)}
+      request.respondWith({
+          status: mockResponse.status,
+          statusText: mockResponse.statusText,
+          headers: {
+            ...defaultHeaders,
+            'mock-id': responseMockId
+          },
+          body: JSON.stringify(mockResponseData)
+        })
+      }
+  })
+}
 
-
+module.exports = {
+  instrumentTraffic: _instrumentHTTPTraffic
+}
 
 
 
